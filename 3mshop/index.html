@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마진 계산기</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+	<style>
+		.tablebox1 table tr, .tablebox2 table tr {
+			border-bottom: 1px dotted #ccc;
+		}
+		.tablebox1 table td {
+			max-width: 220px;
+			padding-left: 20px;
+			padding-right: 20px;
+			text-align: right;
+			font-size: 18px;
+			font-weight: 800;
+			color: #081a51;
+			border: 0;
+			background-color: #fff;
+			overflow: hidden;
+		}
+		.tablebox2 table td {
+			width:65%;
+		}
+		.txt_green {
+			color: #006d00 !important;
+		}
+		.txt_red {
+			color: #d20000 !important;
+		}
+		.tablebox1 table th {
+			width: 150px;
+			text-align: center;
+			font-size: 15px;
+			font-weight: 500;
+			color: #fff;
+			border: 0;
+			background-color: #081a51;
+		}
+		.tablebox1, .tablebox2 {
+			width: 420px;
+			height: auto;
+			border-radius: 5px;
+			border: 4px solid #081a51;
+			margin-top:20px;
+		}
+		.tablebox1 table td {
+			padding: 10px 20px;
+		}
+		table td>input {
+			float: left;
+			width: calc(100% - 30px);
+			text-align: center;
+		}
+		table td>span {
+			display: inline-block;
+			float: left;
+			width: 170px;
+			font-weight: 800;
+			color: #444;
+			padding: 0 10px;
+		}
+		input {
+			height: 33px;
+			padding: 0 10px;
+			border-radius: 5px !important;
+			font-size: 14px;
+		}
+		input, select, textarea {
+			box-sizing: border-box;
+			border: 1px solid #ccc;
+			-webkit-border-radius: 0;
+		}
+		select {
+			width: 85%;
+			float: left;
+			text-align: center;
+			box-sizing: border-box;
+			padding: 10px;
+			border-radius: 5px;
+		}
+		.btn_blue, .btn_blue:focus, .btn_blue:hover {
+			color: #fff;
+			background-color: #081a51;
+			border-color: #081a51;
+		}
+		.btn-primary {
+			font-size: 13px;
+			font-weight: 400;
+			text-align: center;
+			line-height: 16px;
+			border-radius: 5px;
+			border: 1px solid #ccc;
+			padding: 7.5px 12px;
+			display: block;
+			cursor: pointer;
+			padding-bottom: 13px;
+			width: 428px;
+			border-top-right-radius: 0;
+			border-top-left-radius: 0;
+		}
+
+	</style>
+	<div style="width:800px; margin:0 auto; position: relative;">
+		<h1>마진 계산기</h1>
+		<div class="tablebox1">
+			<table id="totalTable">
+				<tr>
+					<th>정산금액</th>
+					<td><span id="total_mo">0</span> 원</td>
+				</tr>
+				<tr>
+					<th>판매이익</th>
+					<td class=""><span id="margin_mo">0</span> 원</td>
+				</tr>
+				<tr>
+					<th>마진율</th>
+					<td class=""><span id="margin_per">0</span> %</td>
+				</tr>
+			</table>
+		</div>
+
+		<div class="tablebox2 tablebox1">
+			<table id="dataTable">
+				<tr>
+					<th class="txt_green" style="background:white; font-size:1.1em;">
+						판매가격
+					</th>
+					<td>
+						<input type="text" id="sel_price">원
+					</td>
+				</tr>
+				<tr>
+					<th class="txt_green" style="background:white; font-size:1.1em;">
+						받은배송비
+					</th>
+					<td>
+						<input type="text" id="delivery_price">원
+					</td>
+				</tr>
+				<tr>
+					<th class="txt_red" style="background:white; font-size:1.1em;">
+						매입가
+					</th>
+					<td>
+						<input type="text" id="buy_price">원
+					</td>
+				</tr>
+				<tr>
+					<th class="txt_red" style="background:white; font-size:1.1em;">
+						보낸배송비<br/><span style="font-size:0.8em;">(택배비,포장비)</span>
+					</th>
+					<td>
+						<input type="text" id="send_delivery_price">원
+					</td>
+				</tr>
+				<tr>
+					<th class="txt_red" style="background:white; font-size:1.1em;">
+						수수료
+					</th>
+					<td>
+						<select id="charge">
+							<option value="">선택</option>
+							<option value="스마트스토어">스마트스토어</option>
+							<option value="쿠팡">쿠팡</option>
+							<option value="11번가">11번가</option>
+							<option value="지마켓">지마켓</option>
+							<option value="옥션">옥션</option>
+							<option value="인터파크">인터파크</option>
+							<option value="기타">기타</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th style="background:white; color:black; font-size:1.1em;">
+						매체수수료
+					</th>
+					<td>
+						<input type="text" id="charge_val">%
+					</td>
+				</tr>
+				<tr>
+					<th style="background:white; color:black; font-size:1.1em;">
+						배송비수수료
+					</th>
+					<td>
+						<input type="text" id="send_charge">%
+					</td>
+				</tr>
+
+			</table>
+		</div>
+		<button type="button" class="btn_blue btn_calc btn btn-primary">계산하기</button>
+		
+		<div style="position: absolute; top: 70px; right: 10px;">
+			<textarea id="csvOutput" rows="10" cols="50" style="width:305px;"></textarea>
+			<div>
+				<button id="saveButton" style="width:49%; border-radius: 5px; padding: 10px;">저장하기</button>
+				<button id="copyButton" style="width:49%; border-radius: 5px; padding: 10px;">복사하기</button>
+			</div>
+		</div>
+	</div>
+
+    <script>
+		let charge_list = [
+			["스마트스토어",5.63,3.63],
+			["쿠팡",11.88,3.30],
+			["11번가",15.00,3.30],
+			["지마켓",15.00,3.30],
+			["옥션",15.00,3.30],
+			["인터파크",15.00,3.30],
+			["기타",15.00,3.30],
+		];
+
+        $(document).ready(function() {
+			$(".btn_calc").click(function() {
+				var sel_price = Number($("#sel_price").val());							//판매가
+				var delivery_price = Number($("#delivery_price").val());				//받은배송비
+				var buy_price = Number($("#buy_price").val());							//구매가
+				var send_delivery_price = Number($("#send_delivery_price").val());		//보낸배송비(택배,포장)
+				var charge_val = (Number($("#charge_val").val())/100).toFixed(4);		//매체수수료
+				var send_charge = (Number($("#send_charge").val())/100).toFixed(4);		//배송수수료
+				var total_mo = "";														//정산금액
+				var margin_mo = "";														//판매이익
+				var margin_per = "";													//마진율
+				if(!sel_price) {
+					alert("판매가격이 0원??");
+					return false;
+				}
+				total_mo = Math.ceil((sel_price+delivery_price)-((sel_price*charge_val)+(delivery_price*send_charge)));
+				margin_mo = Math.ceil(total_mo-(buy_price+send_delivery_price));
+				margin_per = (margin_mo/sel_price)*100;
+				margin_per = margin_per.toFixed(1);	//반올림
+				
+				$("#total_mo").html(comma(total_mo));
+				$("#margin_mo").html(comma(margin_mo));
+				$("#margin_per").html(comma(margin_per));
+			});
+
+			$("#charge").on("change",function() {
+				var val = $(this).val();
+				if(!val) {
+					alert("선택 안함. 선택 ㄱㄱ");
+					$("#charge_val").val("");
+					$("#send_charge").val("");
+					return false;
+				}
+				for(var i=0; i < charge_list.length; i++) {
+					if(charge_list[i][0] == val) {
+						$("#charge_val").val(charge_list[i][1]);
+						$("#send_charge").val(charge_list[i][2]);
+					}
+				}
+			});
+
+            // 저장하기 버튼 클릭 시 테이블 데이터를 textarea에 출력
+            $("#saveButton").click(function() {
+                var csvData = [];
+                $("#dataTable tr").each(function() {
+                    var rowData = [];
+                    $(this).find('td').each(function() {
+                        var cellData = $(this).text().trim();  // td 안의 텍스트
+                        var inputVal = $(this).find('input').val();  // input 안의 값
+						var selectVal = $(this).find('select').val();
+						
+						if(selectVal) {
+							rowData.push(selectVal);
+						} else {
+							rowData.push(inputVal + cellData);
+						}
+                     
+                    });
+                    csvData.push(rowData.join('\t'));  // 탭 구분
+                });
+
+				$("#totalTable tr").each(function() {
+                    var rowData = [];
+                    $(this).find('td').each(function() {
+                        rowData.push($(this).text());
+                    });
+                    csvData.push(rowData.join('\t'));  // 탭 구분
+                });
+
+                // 결과를 textarea에 출력
+                $("#csvOutput").val(csvData.join('\t'));
+            });
+
+            // 복사하기 버튼 클릭 시 textarea 내용 복사
+            $("#copyButton").click(function() {
+                var copyText = $("#csvOutput");
+
+                // textarea 선택 및 내용 복사
+                copyText.select();
+                document.execCommand("copy");
+
+                // 복사 완료 알림
+                alert("복사되었습니다.");
+            });
+        });
+		function comma(str) {
+			str = String(str);
+			return str.replace(/(\d)(?=(?:\d{3})+(?!\d))/g, '$1,');
+		}
+    </script>
+</body>
+</html>
