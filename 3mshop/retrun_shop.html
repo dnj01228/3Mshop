@@ -39,11 +39,14 @@
 		<div style="text-align:center;">
 			<img src="/images/logo.png" style="width:100px; margin-right: 10px;">
 			<h1 style="display: inline-block; vertical-align: bottom;">재구매 상품 리스트</h1><br/>
-			<button value="step 1" onclick="copy_code('step1')"/>
-			<button value="step 2" onclick="copy_code('step2')"/>
-			<button value="자동스크롤" onclick="copy_code('step3')"/>
+			<input type="button" value="step 1" onclick="copy_code('step1')"/>
+			<input type="button" value="step 2" onclick="copy_code('step2')"/>
+			<input type="button" value="자동스크롤" onclick="copy_code('step3')"/>
+			<input type="button" onclick="location.href='https://shopping.naver.com/gift/category'" value="네이버 선물샵" />
+			<input type="button" onclick="insert_data();" value="복사한 데이터 리스트로 표시" />
 		</div>
 		<div class="list_box"></div>
+
 		<textarea id="step1" style="display: none;">
 			const titles = [];
 
@@ -96,6 +99,61 @@
 			// 감지 시작
 			observer.observe(target[0], config);
 		</textarea>
+
+		<textarea id="step2" style="display: none;">
+			// 감지 종료
+			observer.disconnect();
+
+			const titlesText = titles.join(' ');
+			console.log(titlesText);
+
+			if (titles.length > 0) {
+				const copyButton = document.createElement('button');
+				copyButton.textContent = '복사하기';
+				copyButton.style.position = 'fixed';
+				copyButton.style.top = '10px';
+				copyButton.style.right = '10px';
+				copyButton.style.padding = '10px 15px';
+				copyButton.style.backgroundColor = 'blue';
+				copyButton.style.color = 'white';
+				copyButton.style.border = 'none';
+				copyButton.style.borderRadius = '5px';
+				copyButton.style.cursor = 'pointer';
+				copyButton.style.zIndex = '111';
+				document.body.appendChild(copyButton);
+
+				copyButton.addEventListener('click', () => {
+					navigator.clipboard.writeText(titlesText).then(() => {
+						alert('텍스트가 복사되었습니다!');
+					}).catch(err => {
+						console.error('복사 실패:', err);
+					});
+				});
+			}
+		</textarea>
+
+		<textarea id="step3" style="display: none;">
+			//스크롤 count 숫자만큼 내려주기
+
+			async function scrollToBottom(count) {
+			let previousHeight = 0;
+			for(var i=0; i <= count; i++) {
+				const currentHeight = document.body.scrollHeight;
+				window.scrollTo(0, currentHeight);
+				await new Promise(resolve => setTimeout(resolve, 500));
+				if (currentHeight === previousHeight) {
+				break;
+				}
+				previousHeight = currentHeight;
+			}
+			}
+
+			scrollToBottom(숫자입력);
+		</textarea>
+
+		<textarea id="insert_data" style="display: none;">
+
+		</textarea>
 	</div>
 
     <script>
@@ -110,6 +168,15 @@
 			if(copy) {
 				alert("데이터가 복사되었습니다.");
 			}
+		}
+
+		function insert_data() {
+			var textarea = $("#insert_data");
+			textarea.show();
+			textarea.select();
+			document.execCommand('paste'); // 붙여넣기
+			var clipboardText = textarea.value;
+			$(".list_box").html(clipboardText);
 		}
     </script>
 </body>
