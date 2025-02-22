@@ -172,12 +172,25 @@
 
 		function insert_data() {
 			var textarea = $("#insert_data");
+			var result = getClipboardTextModern();
+
 			textarea.show();
-			textarea.select();
-			document.execCommand('paste'); // 붙여넣기
-			var clipboardText = textarea.value;
-			$(".list_box").html(clipboardText);
+			textarea.val(result);
+
+			//var clipboardText = textarea.val();
+			$(".list_box").html(result);
 		}
+
+		// 클립보드의 텍스트를 가져오기
+		function getClipboardTextModern() {
+			return navigator.clipboard.readText(); // 붙여넣기
+		}
+
+		getClipboardTextModern().then(function (clipboardContent) {
+			console.log("Clipboard Content:", clipboardContent);
+		}).catch(function (err) {
+			console.error("Failed to read clipboard content:", err);
+		});
     </script>
 </body>
 </html>
