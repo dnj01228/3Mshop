@@ -38,13 +38,79 @@
 	<div class="main_box">
 		<div style="text-align:center;">
 			<img src="/images/logo.png" style="width:100px; margin-right: 10px;">
-			<h1 style="display: inline-block; vertical-align: bottom;">재구매 상품 리스트</h1>
+			<h1 style="display: inline-block; vertical-align: bottom;">재구매 상품 리스트</h1><br/>
+			<button value="step 1" onclick="copy_code('step1')"/>
+			<button value="step 2" onclick="copy_code('step2')"/>
+			<button value="자동스크롤" onclick="copy_code('step3')"/>
 		</div>
-		
+		<div class="list_box"></div>
+		<textarea id="step1" style="display: none;">
+			const titles = [];
+
+			document.querySelectorAll('li').forEach(li => {
+				if (li.textContent.includes('재구매')) {
+					li.style.backgroundColor = 'red';
+					li.classList.add("reshop");
+				}
+			});
+
+			document.querySelectorAll('.reshop').forEach(title => {
+				if (!titles.includes(title.innerHTML)) { // 중복 확인
+					titles.push(title.innerHTML);
+				}
+				title.classList.remove("reshop");
+			});
+
+			// 스크롤 내리다가 productCardListResponsive_product_card_list_responsive__IEG45 이 클래스 안의 내용이 변하면 step2 실행 반복
+
+			// 감지할 타겟
+			var target = document.querySelectorAll('.productCardListResponsive_product_card_list_responsive__IEG45');
+
+			// 변경을 감지했을 때 실행할 부분
+			var observer = new MutationObserver(mutations => {
+			mutations.forEach(mutation => {
+				var content = mutation.addedNodes[0];
+				
+				if (content && content.innerHTML.includes('재구매')) {
+					content.style.backgroundColor = 'red';
+					content.classList.add("reshop");
+
+					// 중복 확인 후 titles에 추가
+					if (!titles.includes(content.innerHTML)) {
+						titles.push(content.innerHTML);
+					}
+				}
+			});
+			});
+
+			// 감지 설정
+			var config = {
+			childList: true,   // 타겟의 하위 요소 추가 및 제거 감지
+			attributes: false,   // 타켓의 속성 변경를 감지
+			characterData: false,   // 타겟의 데이터 변경 감지
+			subtree: false,   // 타겟의 자식 노드 아래로도 모두 감지
+			attributeOldValue: false,   // 타겟의 속성 변경 전 속성 기록
+			characterDataOldValue: false   // 타겟의 데이터 변경 전 데이터 기록
+			};
+
+			// 감지 시작
+			observer.observe(target[0], config);
+		</textarea>
 	</div>
 
     <script>
-		
+		function copy_code(step) {
+			$('#'+step).show();
+			$('#'+step).select();
+
+			var copy = document.execCommand('copy');
+
+			$('#'+step).hide();
+
+			if(copy) {
+				alert("데이터가 복사되었습니다.");
+			}
+		}
     </script>
 </body>
 </html>
