@@ -150,10 +150,6 @@
 
 			scrollToBottom(숫자입력);
 		</textarea>
-
-		<textarea id="insert_data" style="display: none;">
-
-		</textarea>
 	</div>
 
     <script>
@@ -172,25 +168,19 @@
 
 		function insert_data() {
 			var textarea = $("#insert_data");
-			var result = getClipboardTextModern();
 
-			textarea.show();
-			textarea.val(result);
-
-			//var clipboardText = textarea.val();
-			$(".list_box").html(result);
+			getClipboardTextModern().then(function (clipboardContent) {
+				console.log("Clipboard Content:", clipboardContent);
+				$(".list_box").html(clipboardContent);
+			}).catch(function (err) {
+				console.error("Failed to read clipboard content:", err);
+			});
 		}
 
 		// 클립보드의 텍스트를 가져오기
 		function getClipboardTextModern() {
 			return navigator.clipboard.readText(); // 붙여넣기
 		}
-
-		getClipboardTextModern().then(function (clipboardContent) {
-			console.log("Clipboard Content:", clipboardContent);
-		}).catch(function (err) {
-			console.error("Failed to read clipboard content:", err);
-		});
     </script>
 </body>
 </html>
