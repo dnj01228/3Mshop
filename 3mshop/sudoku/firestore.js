@@ -30,3 +30,19 @@ export async function saveRanking({ username, hints, time, totalSeconds }) {
     console.error("❌ 랭킹 저장 실패:", e);
   }
 }
+
+export async function getRankings() {
+  const q = query(
+    collection(db, "rankings"),
+    orderBy("totalSeconds", "asc"),
+    orderBy("hints", "asc")
+  );
+
+  const querySnapshot = await getDocs(q);
+  const rankings = [];
+  querySnapshot.forEach((doc) => {
+    rankings.push(doc.data());
+  });
+
+  return rankings;
+}

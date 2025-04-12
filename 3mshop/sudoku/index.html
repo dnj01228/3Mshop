@@ -234,6 +234,32 @@
     animation: fadeIn 0.8s ease-in-out;
   }
 
+  .ranking-box {
+      background-color: white;
+      width: 80%;
+      max-width: 500px;
+      margin: 50px auto;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      text-align: center;
+      font-size: 1.2rem;
+      animation: fadeIn 0.5s ease;
+      position: relative;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #ff5050;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -255,10 +281,19 @@
 
 <button id="installBtn">📲 설치하기</button>
 
+<!-- 랭킹 출력 영역 -->
+<div id="ranking-container" style="display: none;">
+  <div id="ranking-list" class="ranking-box">
+    <button id="close-ranking" class="close-btn">❌ 닫기</button>
+    <!-- 여기에 랭킹 들어감 -->
+  </div>
+</div>
+
 <div id="intro-screen">
   <h1 class="title">🧠 스도쿠 챌린지</h1>
   <p class="subtitle">빈칸을 맞춰서 정답을 완성해보자!</p>
   <button onclick="startGame()">게임 시작</button>
+  <button id="show-rankings">🏆 랭킹 보기</button>
 </div>
 
 <div id="countdown" style="display: none;">3</div>
@@ -384,6 +419,34 @@ function playSoundFor3Sec() {
         [array[i], array[j]] = [array[j], array[i]];
       }
     }
+
+    // 🔥 랭킹 보기 버튼 클릭 시
+document.getElementById("show-rankings").addEventListener("click", async () => {
+  const rankings = await getRankings();
+  const rankingListDiv = document.getElementById("ranking-list");
+  const container = document.getElementById("ranking-container");
+
+  if (rankings.length === 0) {
+    rankingListDiv.innerHTML = "<p>아직 랭킹이 없습니다 😢</p>";
+  } else {
+    let html = "<h2>🏆 TOP 10 랭킹</h2><ol style='text-align: left;'>";
+    rankings.slice(0, 10).forEach((rank, index) => {
+      html += `<li><strong>${rank.username}</strong> - ${rank.time} / 힌트: ${rank.hints}</li>`;
+    });
+    html += "</ol>";
+    rankingListDiv.innerHTML += html;
+  }
+
+  container.style.display = "block";
+});
+
+// 🔥 닫기 버튼
+document.getElementById("close-ranking").addEventListener("click", () => {
+  const container = document.getElementById("ranking-container");
+  const rankingListDiv = document.getElementById("ranking-list");
+  container.style.display = "none";
+  rankingListDiv.innerHTML = `<button id="close-ranking" class="close-btn">❌ 닫기</button>`; // 내용 초기화
+});
 
 function showCountdownAndStart(callback) {
   const countdownEl = document.getElementById("countdown");
