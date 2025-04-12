@@ -269,33 +269,33 @@
 <audio id="input-sound" src="pop.mp3" preload="auto"></audio>
 <audio id="clear-sound" src="clear.mp3" preload="auto"></audio><body>
 
-  <div id="result" style="display: none; background: white;border-radius: 16px;box-shadow: 0 4px 12px rgba(0,0,0,0.15);padding: 24px;max-width: 500px;margin: 0 auto;font-family: 'Arial', sans-serif;text-align: center;">
-    <div id="result-content"></div>
-    <div id="game-over" style="display: none;">
-      <p>게임 완료! 이름을 입력하세요..</p>
-      <input type="text" id="username" placeholder="닉네임 입력" />
-      <button id="save-score">랭킹 저장</button>
-    </div>
+<div id="result" style="display: none; background: white;border-radius: 16px;box-shadow: 0 4px 12px rgba(0,0,0,0.15);padding: 24px;max-width: 500px;margin: 0 auto;font-family: 'Arial', sans-serif;text-align: center;">
+  <div id="result-content"></div>
+  <div id="game-over" style="display: none;">
+    <p>게임 완료! 이름을 입력하세요..</p>
+    <input type="text" id="username" placeholder="닉네임 입력" />
+    <button id="save-score">랭킹 저장</button>
   </div>
+</div>
 
-  <button id="installBtn">📲 설치하기</button>
+<button id="installBtn">📲 설치하기</button>
 
-  <!-- 랭킹 출력 영역 -->
-  <div id="ranking-container" style="display: none;">
-    <div id="ranking-list" class="ranking-box">
-      <button id="close-ranking" class="close-btn">❌ 닫기</button>
-      <!-- 여기에 랭킹 들어감 -->
-    </div>
+<!-- 랭킹 출력 영역 -->
+<div id="ranking-container" style="display: none;">
+  <div id="ranking-list" class="ranking-box">
+    <button id="close-ranking" class="close-btn">❌ 닫기</button>
+    <!-- 여기에 랭킹 들어감 -->
   </div>
+</div>
 
-  <div id="intro-screen">
-    <h1 class="title">🧠 스도쿠 챌린지</h1>
-    <p class="subtitle">빈칸을 맞춰서 정답을 완성해보자!</p>
-    <button onclick="startGame()">게임 시작</button>
-    <button id="show-rankings">🏆 랭킹 보기</button>
-  </div>
+<div id="intro-screen">
+  <h1 class="title">🧠 스도쿠 챌린지</h1>
+  <p class="subtitle">빈칸을 맞춰서 정답을 완성해보자!</p>
+  <button onclick="startGame()">게임 시작</button>
+  <button id="show-rankings">🏆 랭킹 보기</button>
+</div>
 
-  <div id="countdown" style="display: none;">3</div>
+<div id="countdown" style="display: none;">3</div>
 
   <div id="game-container" style="display: none;">
     <h2>스도쿠 챌린지 모드</h2>
@@ -315,6 +315,533 @@
     <p id="score"></p>
   </div>
 
-  <script type="module" src="main.js"></script>
-  </body>
+  <script>
+	const sound = document.getElementById("clear-sound");
+	let gameStartTime = Date.now(); // 전체 게임 시작 시간
+	let levelStartTime = null; // 현재 레벨 시작 시간
+	const levelTimes = []; // 각 난이도별 클리어 시간
+	const initialHints = 5; // 최대 힌트 수 (이건 설정한 수에 따라 바꿔줘)
+	let totalHintsUsed = 0;
+	const accuracyData = []; // 각 레벨별 정답률
+
+  let totalElapsedSeconds = 0;
+
+  let deferredPrompt;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    // 기본 동작 막고
+    e.preventDefault();
+    deferredPrompt = e;
+
+    // 설치 버튼 보여주기
+    const installBtn = document.getElementById('installBtn');
+    installBtn.style.display = 'block';
+
+    installBtn.addEventListener('click', async () => {
+      installBtn.style.display = 'none'; // 버튼 숨기고
+      deferredPrompt.prompt(); // 설치 창 띄움
+
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('🎉 설치 완료!');
+      } else {
+        console.log('😢 설치 거절당함...');
+      }
+
+      deferredPrompt = null; // 한 번만 쓸 수 있음
+    });
+  });
+
+  // 설치된 경우에도 버튼 안 보이게 처리
+  window.addEventListener('appinstalled', () => {
+    console.log('✅ 앱이 설치되었어요!');
+    document.getElementById('installBtn').style.display = 'none';
+  });
+
+function playSoundFor3Sec() {
+  try {
+    sound.currentTime = 0; // 처음부터 재생
+    sound.play().catch(err => console.warn("🔇 사운드 재생 실패:", err));
+
+    setTimeout(() => {
+      sound.pause();        // 정지
+      sound.currentTime = 0; // 다음에 재생할 때 처음부터
+    }, 3000); // 3초 후 정지
+  } catch (e) {
+    console.warn("🎧 사운드 오류:", e);
+  }
+}
+
+	const boardElement = document.getElementById("board");
+    const timerElement = document.getElementById("timer");
+    const levelLabel = document.getElementById("level-label");
+    const messageElement = document.getElementById("message");
+    const scoreElement = document.getElementById("score");
+    const livesElement = document.getElementById("lives");
+    const hintsElement = document.getElementById("hints");
+
+    let timer, startTime;
+    let currentPuzzle = [], currentSolution = [];
+    let levelIndex = 0;
+    const levels = ["easy", "medium", "hard"];
+    let lives = 5;
+    let hints = 5;
+    const MAX_TIME = 600;
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    
+
+// 🔥 닫기 버튼
+document.getElementById("close-ranking").addEventListener("click", () => {
+  const container = document.getElementById("ranking-container");
+  const rankingListDiv = document.getElementById("ranking-list");
+  container.style.display = "none";
+  rankingListDiv.innerHTML = `<button id="close-ranking" class="close-btn">❌ 닫기</button>`; // 내용 초기화
+});
+
+function showCountdownAndStart(callback) {
+  const countdownEl = document.getElementById("countdown");
+  const countdownTexts = ["3", "2", "1", "START!"];
+  let i = 0;
+
+  countdownEl.style.display = "flex";
+
+  const interval = setInterval(() => {
+    countdownEl.textContent = countdownTexts[i];
+    countdownEl.classList.remove("pop");
+    void countdownEl.offsetWidth; // 강제 리렌더링
+    countdownEl.classList.add("pop");
+
+    i++;
+
+    if (i === countdownTexts.length) {
+      clearInterval(interval);
+      setTimeout(() => {
+        countdownEl.style.display = "none";
+        if (callback) callback(); // 게임 시작 함수 실행
+      }, 1000);
+    }
+  }, 1000);
+}
+
+
+
+    function isSafe(board, row, col, num) {
+      for (let x = 0; x < 9; x++) {
+        if (board[row][x] === num || board[x][col] === num ||
+          board[Math.floor(row / 3) * 3 + Math.floor(x / 3)][Math.floor(col / 3) * 3 + x % 3] === num)
+          return false;
+      }
+      return true;
+    }
+
+    function solveSudoku(board) {
+      for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
+          if (board[row][col] === 0) {
+            for (let num = 1; num <= 9; num++) {
+              if (isSafe(board, row, col, num)) {
+                board[row][col] = num;
+                if (solveSudoku(board)) return true;
+                board[row][col] = 0;
+              }
+            }
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    function generatePuzzle(difficulty) {
+      const board = Array.from({ length: 9 }, () => Array(9).fill(0));
+      const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+      shuffle(numbers);
+      for (let i = 0; i < 9; i++) board[0][i] = numbers[i];
+      solveSudoku(board);
+      const solution = board.map(row => row.slice());
+      let blanks = difficulty === "easy" ? 30 : difficulty === "medium" ? 45 : 55;
+      const puzzle = board.map(row => row.slice());
+      while (blanks > 0) {
+        const r = Math.floor(Math.random() * 9);
+        const c = Math.floor(Math.random() * 9);
+        if (puzzle[r][c] !== 0) {
+          puzzle[r][c] = 0;
+          blanks--;
+        }
+      }
+      return { puzzle, solution };
+    }
+
+    function createBoard(puzzle) {
+      boardElement.innerHTML = "";
+      for (let i = 0; i < 9; i++) {
+        const row = boardElement.insertRow();
+        for (let j = 0; j < 9; j++) {
+          const cell = row.insertCell();
+          if (puzzle[i][j] !== 0) {
+            cell.textContent = puzzle[i][j];
+            cell.classList.add("fixed");
+          } else {
+            const input = document.createElement("input");
+            input.type = "number";
+            input.min = 1;
+            input.max = 9;
+            input.addEventListener("input", () => {
+  		const audio = document.getElementById("input-sound");
+ 		 if (audio) {
+    			audio.currentTime = 0;
+    			audio.play();
+  		}
+	    });
+	    input.addEventListener("blur", () => checkInstant(i, j, input));
+            cell.appendChild(input);
+          }
+          if (j % 3 === 0) cell.style.borderLeftWidth = "3px";
+          if (i % 3 === 0) cell.style.borderTopWidth = "3px";
+        }
+      }
+    }
+
+    function updateLives() {
+      livesElement.innerHTML = "";
+      for (let i = 0; i < 5; i++) {
+        const heart = document.createElement("span");
+        heart.classList.add("heart");
+        heart.textContent = i < lives ? "❤️" : "🤍";
+        if (i >= lives) heart.classList.add("lost");
+        livesElement.appendChild(heart);
+      }
+    }
+
+    function updateStatus() {
+      updateLives();
+      hintsElement.textContent = hints;
+    }
+
+    function startTimer() {
+      clearInterval(timer);
+      startTime = Date.now();
+      timer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        if(levelIndex == 2) {
+          var remaining = 900 - elapsed;
+        } else {
+          var remaining = MAX_TIME - elapsed;
+        }
+        
+        if (remaining <= 0) {
+          timerElement.textContent = "00:00";
+          clearInterval(timer);
+          messageElement.textContent = "⏰ 시간 초과! 게임 오버!";
+          disableBoard();
+        } else {
+          const min = String(Math.floor(remaining / 60)).padStart(2, '0');
+          const sec = String(remaining % 60).padStart(2, '0');
+          timerElement.textContent = `${min}:${sec}`;
+        }
+      }, 1000);
+    }
+
+function startGame() {
+  levelStartTime = Date.now(); // 시작 시간 기록
+  const start = document.getElementById('intro-screen');
+  const game = document.getElementById('game-container');
+
+	game.style.display = "none";
+	// 애니메이션 클래스 추가
+  start.classList.add('fade-out');
+start.style.display = 'none';
+
+showCountdownAndStart(() => {
+    document.getElementById("game-container").style.display = "block";
+
+  
+
+  // 0.5초 후에 화면 전환
+  setTimeout(() => {
+    
+    game.style.display = 'block';
+    game.classList.add('fade-in');
+
+    // 게임 로직 시작
+    lives = 5;
+    hints = 5;
+    updateStatus();
+    const level = levels[levelIndex];
+    levelLabel.textContent = ["쉬움", "보통", "어려움"][levelIndex];
+    const { puzzle, solution } = generatePuzzle(level);
+    currentPuzzle = puzzle;
+    currentSolution = solution;
+    createBoard(puzzle);
+    startTimer();
+    messageElement.textContent = "";
+    scoreElement.textContent = "";
+  }, 500);
+});
+}
+
+    function disableBoard() {
+      document.querySelectorAll("input").forEach(input => input.disabled = true);
+    }
+
+ function checkInstant(i, j, input) {
+  const val = parseInt(input.value);
+
+  if (val && val !== currentSolution[i][j]) {
+    lives--;
+    updateStatus();
+
+    // 진동
+    if (navigator.vibrate) navigator.vibrate(100);
+
+    // 시각 효과
+    input.classList.add("shake-wrong");
+    input.dataset.wrong = "true"; // 틀렸다는 표시
+
+    // 흔들림 제거 (단 배경색은 유지됨)
+    setTimeout(() => {
+      input.classList.remove("shake-wrong");
+    }, 300);
+
+    if (lives <= 0) {
+      messageElement.textContent = "💥 생명을 모두 잃었습니다. 게임 오버!";
+      disableBoard();
+      clearInterval(timer);
+    }
+  } else {
+    input.style.backgroundColor = "#cfc";
+    input.dataset.wrong = "false";
+  }
+
+  // 배경색 유지
+  if (input.dataset.wrong === "true") {
+    input.style.backgroundColor = "#fdd";
+  }
+}
+
+
+    function checkSolution() {
+      let correct = 0, total = 0;
+      for (let i = 0; i < 9; i++) {
+        for (let j = 0; j < 9; j++) {
+          const cell = boardElement.rows[i].cells[j];
+          if (!cell.classList.contains("fixed")) {
+            const input = cell.querySelector("input");
+            const val = parseInt(input.value);
+            total++;
+            if (val === currentSolution[i][j]) {
+              correct++;
+              input.style.backgroundColor = "#cfc";
+            } else {
+              input.style.backgroundColor = "#fdd";
+            }
+          }
+        }
+      }
+
+     if (correct === total) {
+  // 메시지 출력
+  messageElement.textContent = "🎉 클리어! 다음 단계로 이동합니다.";
+  messageElement.classList.add("message-animate");
+  boardElement.classList.add("clear-animation");
+
+  // ✅ 소리 재생
+  playSoundFor3Sec();
+
+  // ✅ 대형 confetti 발사!!
+  const duration = 2 * 1000;
+  const animationEnd = Date.now() + duration;
+  const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
+
+  const interval = setInterval(function () {
+    const timeLeft = animationEnd - Date.now();
+
+    if (timeLeft <= 0) {
+      clearInterval(interval);
+      return;
+    }
+
+    const particleCount = 50 * (timeLeft / duration);
+    // 두 방향에서 팡팡
+    confetti(Object.assign({}, defaults, {
+      particleCount,
+      origin: { x: Math.random() * 0.5, y: Math.random() * 0.5 }
+    }));
+    confetti(Object.assign({}, defaults, {
+      particleCount,
+      origin: { x: 1 - Math.random() * 0.5, y: Math.random() * 0.5 }
+    }));
+  }, 250);
+
+  clearInterval(timer);
+const levelTime = Math.floor((Date.now() - levelStartTime) / 1000);
+levelTimes.push(levelTime);
+
+// 정답률 계산
+let correct = 0;
+let total = 0;
+for (let i = 0; i < 9; i++) {
+  for (let j = 0; j < 9; j++) {
+    const input = boardElement.rows[i].cells[j].querySelector("input");
+    if (input) {
+      total++;
+      if (parseInt(input.value) === currentSolution[i][j]) {
+        correct++;
+      }
+    }
+  }
+}
+accuracyData.push({ correct, total });
+
+levelIndex++;
+
+setTimeout(() => {
+  messageElement.classList.remove("message-animate");
+  boardElement.classList.remove("clear-animation");
+
+  if (levelIndex < levels.length) {
+    startGame();
+  } else {
+    messageElement.textContent = "🏆 모든 난이도 클리어! 최고입니다!";
+
+    // 최종 클리어 효과 한 번 더 팡팡팡!
+    confetti({
+      particleCount: 300,
+      spread: 100,
+      origin: { y: 0.6 }
+    });
+
+    playSoundFor3Sec();
+    
+    // 통계 결과 보여주기
+    showResult();
+  }
+}, 2500);
+
+}
+
+
+   }
+
+    function giveHint() {
+      if (hints <= 0) {
+    	messageElement.textContent = "⚠️ 힌트가 모두 소진되었습니다.";
+    	return;
+ 	}
+
+  const emptyCells = [];
+
+  for (let i = 0; i < 9; i++) {
+    for (let j = 0; j < 9; j++) {
+      const cell = boardElement.rows[i].cells[j];
+      if (!cell.classList.contains("fixed")) {
+        const input = cell.querySelector("input");
+        const val = parseInt(input.value);
+        if (!val) {
+          emptyCells.push({ i, j, input });
+        }
+      }
+    }
+  }
+
+  if (emptyCells.length === 0) {
+    messageElement.textContent = "✅ 힌트를 줄 빈 칸이 없습니다!";
+    return;
+  }
+
+  const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+  randomCell.input.value = currentSolution[randomCell.i][randomCell.j];
+  randomCell.input.style.backgroundColor = "#ccf";
+  hints--;
+  totalHintsUsed++;
+    updateStatus();
+    }
+
+    function resetGame() {
+      startGame();
+    }
+
+function showResult() {
+  const resultBox = document.getElementById("result");
+  const gameoverBox = document.getElementById("game-over");
+  const resultContent = document.getElementById("result-content");
+  const totalTime = Math.floor((Date.now() - gameStartTime) / 1000);
+
+  const game = document.getElementById('game-container');
+
+  game.style.display = "none";
+
+  let html = `
+    <h2>🎉 클리어 통계</h2>
+    <p>⏱️ 총 소요 시간: <strong>${formatTime(totalTime)}</strong></p>
+    <p><strong>💡 사용한 힌트:</strong> ${totalHintsUsed} / ${initialHints * levels.length}</p>
+    
+    <h3 style="margin-top: 20px; font-size: 20px;">📊 난이도별 통계</h3>
+    <ul style="list-style: none; padding: 0;">
+  `;
+
+  levels.forEach((level, index) => {
+    const time = levelTimes[index];
+    const acc = accuracyData[index];
+    const accuracy = ((acc.correct / acc.total) * 100).toFixed(1);
+    html += `
+      <li style="margin: 10px 0; font-size: 16px;">
+        <strong>${level}</strong>: ⏱️ ${time}초 | 🎯 정답률: ${accuracy}%
+      </li>
+    `;
+  });
+
+  html += `</ul>
+    <button onclick="resetGameFull()" style="
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    " onmouseover="this.style.background='#45a049'" onmouseout="this.style.background='#4CAF50'">
+      🔁 다시 시작
+    </button>
+  `;
+
+  resultContent.innerHTML = html;
+  resultBox.style.display = "block";
+  gameoverBox.style.display = "block";
+  
+}
+
+function resetGameFull() {
+  const resultBox = document.getElementById("result");
+  resultBox.style.display = "none";
+  gameStartTime = Date.now();
+  levelStartTime = null;
+  levelTimes.length = 0;
+  totalHintsUsed = 0;
+  accuracyData.length = 0;
+  levelIndex = 0;
+  hints = initialHints;
+  document.getElementById("result").style.display = "none";
+  startGame();
+}
+
+function formatTime(seconds) {
+  const min = Math.floor(seconds / 60);
+  const sec = seconds % 60;
+  return `${min}분 ${sec}초`;
+}
+</script>
+
+
+<script type="module" src="main.js"></script>
+</body>
 </html>
