@@ -6,7 +6,12 @@ const urlsToCache = [
   '/icon-192.png',
   '/icon-512.png',
   '/pop.mp3',
-  '/clear.mp3'
+  '/clear.mp3',
+  '/firebase.js',
+  '/firestore.js',
+  '/main.js',
+  '/netlify.toml',
+  '/package.json',
 ];
 
 self.addEventListener('install', event => {
