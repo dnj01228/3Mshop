@@ -199,6 +199,25 @@
   text-shadow: 0 0 20px #fff;
 }
 
+#installBtn {
+  display: none;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+#installBtn:hover {
+  background-color: #0056b3;
+}
+
 @keyframes pop {
   0% {
     transform: translate(-50%, -50%) scale(0.5);
@@ -228,6 +247,7 @@
   <div id="result-content"></div>
 </div>
 
+<button id="installBtn">📲 설치하기</button>
 
 <div id="intro-screen">
   <h1 class="title">🧠 스도쿠 챌린지</h1>
@@ -241,7 +261,7 @@
     <h2>스도쿠 챌린지 모드</h2>
     <p>난이도: <span id="level-label">쉬움</span></p>
     <p>⏱️ 타이머: <span id="timer">10:00</span></p>
-    <p>❤️ 생명: <span id="lives"></span> | 💡 힌트: <span id="hints">3</span></p>
+    <p>❤️ 생명: <span id="lives"></span> | 💡 힌트: <span id="hints">5</span></p>
 
     <table id="board"></table>
 
@@ -260,11 +280,43 @@
 	let gameStartTime = Date.now(); // 전체 게임 시작 시간
 	let levelStartTime = null; // 현재 레벨 시작 시간
 	const levelTimes = []; // 각 난이도별 클리어 시간
-	const initialHints = 3; // 최대 힌트 수 (이건 설정한 수에 따라 바꿔줘)
+	const initialHints = 5; // 최대 힌트 수 (이건 설정한 수에 따라 바꿔줘)
 	let totalHintsUsed = 0;
 	const accuracyData = []; // 각 레벨별 정답률
 
-let totalElapsedSeconds = 0;
+  let totalElapsedSeconds = 0;
+
+  let deferredPrompt;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    // 기본 동작 막고
+    e.preventDefault();
+    deferredPrompt = e;
+
+    // 설치 버튼 보여주기
+    const installBtn = document.getElementById('installBtn');
+    installBtn.style.display = 'block';
+
+    installBtn.addEventListener('click', async () => {
+      installBtn.style.display = 'none'; // 버튼 숨기고
+      deferredPrompt.prompt(); // 설치 창 띄움
+
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('🎉 설치 완료!');
+      } else {
+        console.log('😢 설치 거절당함...');
+      }
+
+      deferredPrompt = null; // 한 번만 쓸 수 있음
+    });
+  });
+
+  // 설치된 경우에도 버튼 안 보이게 처리
+  window.addEventListener('appinstalled', () => {
+    console.log('✅ 앱이 설치되었어요!');
+    document.getElementById('installBtn').style.display = 'none';
+  });
 
 function playSoundFor3Sec() {
   try {
@@ -293,7 +345,7 @@ function playSoundFor3Sec() {
     let levelIndex = 0;
     const levels = ["easy", "medium", "hard"];
     let lives = 5;
-    let hints = 3;
+    let hints = 5;
     const MAX_TIME = 600;
 
     function shuffle(array) {
@@ -465,7 +517,7 @@ showCountdownAndStart(() => {
 
     // 게임 로직 시작
     lives = 5;
-    hints = 3;
+    hints = 5;
     updateStatus();
     const level = levels[levelIndex];
     levelLabel.textContent = ["쉬움", "보통", "어려움"][levelIndex];
