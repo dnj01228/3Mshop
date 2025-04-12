@@ -1,6 +1,6 @@
 // import 해야 함
-import { collection, addDoc, Timestamp, query, getDocs, orderBy } from "firebase/firestore";
-import { db } from "./firebase"; // firebase.js에서 export한 db
+import { collection, addDoc, Timestamp, query, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { db } from "./firebase.js"; // firebase.js에서 export한 db
 
 /**
  * 문자열 "3분 10초" 같은 시간 => 총 초로 변환
