@@ -480,7 +480,12 @@ function showCountdownAndStart(callback) {
       startTime = Date.now();
       timer = setInterval(() => {
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        const remaining = MAX_TIME - elapsed;
+        if(levelIndex == 2) {
+          const remaining = MAX_TIME - elapsed;
+        } else {
+          const remaining = MAX_TIME - elapsed;
+        }
+        
         if (remaining <= 0) {
           timerElement.textContent = "00:00";
           clearInterval(timer);
@@ -716,7 +721,7 @@ setTimeout(() => {
 function showResult() {
   const resultBox = document.getElementById("result");
   const resultContent = document.getElementById("result-content");
-const totalTime = Math.floor((Date.now() - gameStartTime) / 1000);
+  const totalTime = Math.floor((Date.now() - gameStartTime) / 1000);
 
   const game = document.getElementById('game-container');
 
