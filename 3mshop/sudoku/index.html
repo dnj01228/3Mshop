@@ -6,7 +6,6 @@
 
   <meta charset="UTF-8">
   <title>스도쿠 챌린지+</title>
-  <script type="module" src="./firestore.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#3498db">
@@ -359,30 +358,6 @@
     document.getElementById('installBtn').style.display = 'none';
   });
 
-  // 랭킹 저장 버튼 클릭 시
-  document.getElementById("save-score").addEventListener("click", async () => {
-    const username = document.getElementById("username").value.trim();
-    if (!username) {
-      alert("닉네임을 입력해주세요!");
-      return;
-    }
-
-    var totalTime = Math.floor((Date.now() - gameStartTime) / 1000);
-    var clearTimeStr = formatTime(totalTime);
-
-    const totalSeconds = parseTimeString(clearTimeStr);
-    
-    await saveRanking({
-      username,
-      hints: totalHintsUsed,
-      time: clearTimeStr,
-      totalSeconds,
-    });
-
-    alert("랭킹이 저장되었습니다!");
-    document.getElementById("game-over").style.display = "none";
-  });
-
 function playSoundFor3Sec() {
   try {
     sound.currentTime = 0; // 처음부터 재생
@@ -420,25 +395,7 @@ function playSoundFor3Sec() {
       }
     }
 
-    // 🔥 랭킹 보기 버튼 클릭 시
-document.getElementById("show-rankings").addEventListener("click", async () => {
-  const rankings = await getRankings();
-  const rankingListDiv = document.getElementById("ranking-list");
-  const container = document.getElementById("ranking-container");
-
-  if (rankings.length === 0) {
-    rankingListDiv.innerHTML = "<p>아직 랭킹이 없습니다 😢</p>";
-  } else {
-    let html = "<h2>🏆 TOP 10 랭킹</h2><ol style='text-align: left;'>";
-    rankings.slice(0, 10).forEach((rank, index) => {
-      html += `<li><strong>${rank.username}</strong> - ${rank.time} / 힌트: ${rank.hints}</li>`;
-    });
-    html += "</ol>";
-    rankingListDiv.innerHTML += html;
-  }
-
-  container.style.display = "block";
-});
+    
 
 // 🔥 닫기 버튼
 document.getElementById("close-ranking").addEventListener("click", () => {
@@ -882,9 +839,55 @@ function formatTime(seconds) {
   const sec = seconds % 60;
   return `${min}분 ${sec}초`;
 }
+</script>
 
+<script type="module">
+  import { getRankings, saveRanking, parseTimeString } from './firestore.js';
 
+  document.getElementById("show-rankings").addEventListener("click", async () => {
+    const rankings = await getRankings();
+    const rankingListDiv = document.getElementById("ranking-list");
+    const container = document.getElementById("ranking-container");
 
-  </script>
+    if (rankings.length === 0) {
+      rankingListDiv.innerHTML = "<p>아직 랭킹이 없습니다 😢</p>";
+    } else {
+      let html = "<h2>🏆 TOP 10 랭킹</h2><ol style='text-align: left;'>";
+      rankings.slice(0, 10).forEach((rank, index) => {
+        html += `<li><strong>${rank.username}</strong> - ${rank.time} / 힌트: ${rank.hints}</li>`;
+      });
+      html += "</ol>";
+      rankingListDiv.innerHTML = html;
+    }
+
+    container.style.display = "block";
+  });
+  
+
+  // 랭킹 저장 버튼 클릭 시
+  document.getElementById("save-score").addEventListener("click", async () => {
+    const username = document.getElementById("username").value.trim();
+    if (!username) {
+      alert("닉네임을 입력해주세요!");
+      return;
+    }
+
+    var totalTime = Math.floor((Date.now() - gameStartTime) / 1000);
+    var clearTimeStr = formatTime(totalTime);
+
+    const totalSeconds = parseTimeString(clearTimeStr);
+    
+    await saveRanking({
+      username,
+      hints: totalHintsUsed,
+      time: clearTimeStr,
+      totalSeconds,
+    });
+
+    alert("랭킹이 저장되었습니다!");
+    document.getElementById("game-over").style.display = "none";
+  });
+</script>
+
 </body>
 </html>

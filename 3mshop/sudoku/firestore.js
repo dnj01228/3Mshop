@@ -1,5 +1,5 @@
 // import 해야 함
-import { collection, addDoc, Timestamp } from "firebase/firestore";
+import { collection, addDoc, Timestamp, query, getDocs, orderBy } from "firebase/firestore";
 import { db } from "./firebase"; // firebase.js에서 export한 db
 
 /**
