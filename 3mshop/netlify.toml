@@ -3,6 +3,6 @@
 
 [[redirects]]
   from = "/api/replicate"
-  to = "/.netlify/functions/replicate-proxy"
+  to = "/netlify/functions/replicate-proxy"
   status = 200
   force = true
